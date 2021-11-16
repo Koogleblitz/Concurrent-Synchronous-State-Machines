@@ -215,7 +215,7 @@ int KeypadTick(int state){
 	switch(state){
 		case getKeypadIn:	
 			switch(keypadIn){
-				//case '\0': 	keyOut = 0; break;
+				case '\0': 	keyOut = 0x1F; 	break;
 				case '0':	keyOut = 0;	break;
 				case '1':	keyOut = 1;	break;
 				case '2':	keyOut = 2;	break;
@@ -226,6 +226,13 @@ int KeypadTick(int state){
 				case '7':	keyOut = 7;	break;
 				case '8':	keyOut = 8;	break;
 				case '9':	keyOut = 9;	break;
+				case 'A':	keyOut= 0x0A; 	break;
+				case 'B':	keyOut= 0x0B; 	break;
+				case 'C':	keyOut= 0x0C; 	break;
+				case 'D':	keyOut= 0x0D; 	break;
+				case '*':	keyOut= 0x0E; 	break;
+				case '#':	keyOut= 0x0F; 	break;
+				default:	keyOut= 0x1B; 	break;
 			}
 		break;
 
