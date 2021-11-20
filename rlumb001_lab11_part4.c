@@ -1,12 +1,12 @@
 /*	Author: Richard Tobing, rlumb001@ucr.edu
  *  Partner(s) Name: 
  *	Lab Section: 21
- *	Assignment: Lab #11  Exercise #2
+ *	Assignment: Lab #11  Exercise #4
  *	Exercise Description: [optional - include for your own benefit]
  *
  *	I acknowledge all content contained herein, excluding timer.h or example
  *	code, is my own original work.
-	Demo link: https://www.youtube.com/watch?v=ZBSkpUKzkQs
+	Demo link: https://www.youtube.com/watch?v=c9KUTv81s1g
  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -14,6 +14,7 @@
 #include "simAVRHeader.h"
 #include "io.h"
 #include <stdio.h>
+//#include <string>
 #endif
 //////////////////////////////////////////////////////////////////////Headers////////////////////////////////////////////////////////////////////////////////
 // Permission to copy is granted provided that this header remains intact. 
@@ -175,18 +176,18 @@ typedef struct _task{
 
 
 
-
-
-
-
-
-
-
-
-
-
 //-----------------shared vars---------------//
-unsigned char keyOut = 0;
+unsigned char keyOut = 7;
+unsigned char keypadIn;
+
+
+// unsigned char text1 = '1';
+// unsigned char text2 = '2';
+// unsigned char text3 = '3';
+// unsigned char text4 = '4';
+// unsigned char text5 = '5';
+// unsigned char text6 = '6';
+// unsigned char text8 = '7';
 
 
 //unsigned long chron = 0;
@@ -197,12 +198,13 @@ unsigned char keyOut = 0;
 //-------------other global vars-------------//
 unsigned short col = 0;
 
+
 //-----------\other global vars--------------//
 
 
 
 //---------------------------------------States----------------------------------------------//
-enum displayStates{displayOut};
+enum displayStates{displayOut, wait};
 enum keypadStates{getKeypadIn};
 //---------------------------------------\States----------------------------------------------//
 
@@ -211,39 +213,40 @@ enum keypadStates{getKeypadIn};
 
 //-------------------------------------------------------------------State Machines----------------------------------------------------//
 int KeypadTick(int state){	
-//PORTB = 1;
-	unsigned char keypadIn =  GetKeypadKey();
+	keypadIn =  GetKeypadKey();
+	//strcpy(keypadIn, GetKeypadKey());
+	
 
 	switch(state){
 		case getKeypadIn: state = getKeypadIn;	break;
 		default: state = getKeypadIn;	break;
+	
 	}
 	//------------------------------------------------------------
 	switch(state){
 		case getKeypadIn:	
 			switch(keypadIn){
-				case '\0': 	keyOut = 0x1F; 	break;
-				case '0':	keyOut = 0;			break;
-				case '1':	keyOut = 1;			break;
-				case '2':	keyOut = 2;			break;
-				case '3':	keyOut = 3;			break;
-				case '4':	keyOut = 4;			break;
-				case '5':	keyOut = 5;			break;
-				case '6':	keyOut = 6;			break;
-				case '7':	keyOut = 7;			break;
-				case '8':	keyOut = 8;			break;
-				case '9':	keyOut = 9;			break;
-				case 'A':	keyOut= 0x0A; 	break;
-				case 'B':	keyOut= 0x0B; 	break;
-				case 'C':	keyOut= 0x0C; 	break;
-				case 'D':	keyOut= 0x0D; 	break;
-				case '*':	keyOut= 0x0E; 	break;
-				case '#':	keyOut= 0x0F; 	break;
-				default:	keyOut= 0x1B; 	break;
+				case '\0': 	keyOut = 0x1F;					break;
+				case '0':	keyOut = 0; col = (col<16)? col + 1 : 1;	break;
+				case '1':	keyOut = 1; col = (col<16)? col + 1 : 1;	break;
+				case '2':	keyOut = 2; col = (col<16)? col + 1 : 1;	break;
+				case '3':	keyOut = 3; col = (col<16)? col + 1 : 1;	break;
+				case '4':	keyOut = 4; col = (col<16)? col + 1 : 1;	break;
+				case '5':	keyOut = 5; col = (col<16)? col + 1 : 1;	break;
+				case '6':	keyOut = 6; col = (col<16)? col + 1 : 1;	break;
+				case '7':	keyOut = 7; col = (col<16)? col + 1 : 1;	break;
+				case '8':	keyOut = 8; col = (col<16)? col + 1 : 1;	break;
+				case '9':	keyOut = 9; col = (col<16)? col + 1 : 1;	break;
+				case 'A':	keyOut= 0x0A; col = (col<16)? col + 1 : 1;  	break;
+				case 'B':	keyOut= 0x0B; col = (col<16)? col + 1 : 1;  	break;
+				case 'C':	keyOut= 0x0C; col = (col<16)? col + 1 : 1;  	break;
+				case 'D':	keyOut= 0x0D; col = (col<16)? col + 1 : 1;  	break;
+				case '*':	keyOut= 0x0E; col = (col<16)? col + 1 : 1;  	break;
+				case '#':	keyOut= 0x0F; col = (col<16)? col + 1 : 1;  	break;
+				default:	keyOut= 0x1B; col = (col<16)? col + 1 : 1;  	break;
 			}
 		break;
 	}
-	
 	return state;
 }
 
@@ -251,26 +254,53 @@ int KeypadTick(int state){
 
 
 int OutputTick(int state){
-//PORTB = 2;
 	unsigned char output;
 
 	switch(state){
-		case displayOut: state = displayOut;	break;
-		default: state = displayOut;	break;
+		case wait: 
+			switch(keypadIn){
+				case '\0': 	state = wait;		break;
+				default:	state = displayOut; 	break;
+			}
+			
+		break;
+
+		case displayOut: state = wait;	break;
+		default: state = wait;	break;
 	}
 	//-----------------------------------------
 	switch(state){
 		case displayOut:	
 			output = keyOut;
-			break;
-	}
-	
-	PORTB = output;
-	LCD_DisplayString(32-col, "      CS120B is Legend... wait for it DARY!          ");
-	col = (col<=68)? col +1 : 1;
+			LCD_Cursor(col);
+			if (output == 0) {LCD_WriteData('0'); }
+			else if (keyOut == 1) {LCD_WriteData('1'); }
+			else if (keyOut == 2) { LCD_WriteData('2'); }
+			else if (keyOut == 3) { LCD_WriteData('3'); }
+			else if (output == 4) { LCD_WriteData('4'); }
+			else if (output == 5) { LCD_WriteData('5'); }
+			else if (output == 6) { LCD_WriteData('6'); }
+			else if (output == 7) { LCD_WriteData('7'); }
+			else if (output == 8) { LCD_WriteData('8'); }
+			else if (output == 9) { LCD_WriteData('9'); }
+			else if (output == 0x0A) { LCD_WriteData('A'); }
+			else if (output == 0x0B) { LCD_WriteData('B'); }
+			else if (output == 0x0C) { LCD_WriteData('C'); }
+			else if (output == 0x0D) { LCD_WriteData('D'); }
+			else if (output == 0x0E) { LCD_WriteData('*'); }
+			else if (output == 0x0F) { LCD_WriteData('#'); }	
+		break;
 
+		case wait: break;
+	}
+
+	PORTB = output;
+	
+		
 	return state;		
 }
+
+
 //---------------------------------------------------------------------\State Machines-----------------------------------------------------------------//
 
 
@@ -285,6 +315,7 @@ int main(void) {
 		DDRC = 0xF0; 	PORTC = 0x0F;
 		DDRD = 0xFF; 	PORTD = 0x00;
  		LCD_init();
+		LCD_DisplayString(1, "congratulations!");
 
 		//Declare the task objects
 		//NOTE: thee "task" variable type/struct is defined in the scheduler code
@@ -296,7 +327,7 @@ int main(void) {
 		const char start = -1;
 
 	
-		//set the fields of each task, this could probably be done in a loop
+		//set the fields of each task, this could probably be done in a loop idk
 		task0.state = start;
 		task0.period = 100;
 		task0.elapsedTime = task0.period;
@@ -313,7 +344,7 @@ int main(void) {
 			GCD = findGCD(GCD,tasks[i]->period);
 		}
 
-		TimerSet(1);
+		TimerSet(GCD);
 		TimerOn();
 
 
@@ -332,3 +363,4 @@ int main(void) {
     }
     return 0;
 }
+
